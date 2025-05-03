@@ -6,7 +6,7 @@ import torch
 
 from colors import Colors
 from game import Game
-from src.model.model import DDQN
+from src.model.model import DuelingDQN
 
 
 class GameUI:
@@ -68,7 +68,7 @@ class GameUI:
             game.reset()
             lock_step = False
         elif not lock_step:
-            state = torch.tensor(game.get_state(), dtype=torch.float32).unsqueeze(0)
+            state = torch.tensor(game.get_state(), dtype=torch.float32).unsqueeze(0).unsqueeze(0)
             with torch.no_grad():
                 q_values = model_player(state)
                 action = torch.argmax(q_values).item()
@@ -96,7 +96,8 @@ class GameUI:
 
 
 if __name__ == "__main__":
-    dqn = DDQN(input_dim=201, output_dim=5)
-    dqn.load_state_dict(torch.load("model/tetris_36350_2025_05_02-07_40_53.pkl"))
+    dqn = DuelingDQN(output_dim=5)
+    #dqn = DDQN(input_dim=201, output_dim=5)
+    dqn.load_state_dict(torch.load("resources/model/tetris_2025_05_03-16_27_53.pkl"))
     ui = GameUI()
     ui.play(dqn)

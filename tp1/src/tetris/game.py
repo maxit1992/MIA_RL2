@@ -114,8 +114,6 @@ class Game:
         tiles = self.current_block.get_cell_positions()
         for position in tiles:
             state[position.row][position.column] = self.current_block.id
-        state.flatten()
-        state = np.append(state, self.next_block.id)
         # Binary state in float format
         state = (state != 0) * 1.0
         return state

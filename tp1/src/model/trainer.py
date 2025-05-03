@@ -10,28 +10,44 @@ import numpy as np
 import torch
 
 from ..tetris.game import Game
-from .model import DDQN
 
 
 class TrainerDDQN:
     """
-    Simulate the Tetris game for training an agent model.
+    A trainer class for training a Deep Q-Network (DQN) model to play Tetris.
+
+    This class handles the training process, including environment interaction,
+    experience replay, and model optimization.
     """
     TRANSITION = collections.namedtuple("Transition",
                                         ("state", "action", "reward", "next_state"))
 
     def __init__(self, model: torch.nn.Module):
+        """
+        Initialize the TrainerDDQN class.
+
+        Args:
+            model (torch.nn.Module): The DQN model to be trained.
+        """
         self.eval_network = model
         self.learning_rate = 0.001
         self.gamma = 0.99
-        self.epsilon_start = 1.0
+        self.epsilon_start = 0.001
         self.epsilon_end = 0.001
-        self.epsilon_decay_episodes = 5000
+        self.epsilon_decay_episodes = 3000
         self.buffer_size = 10_000
         self.batch_size = 64
-        self.target_update_freq = 200
+        self.target_update_freq = 100
 
-    def train(self, episodes: int = 10000, max_steps: int = 1000, refresh_rate: int = 100):
+    def train(self, episodes: int = 10000, max_steps: int = 1000, refresh_rate: int = 50):
+        """
+        Train the DQN model.
+
+        Args:
+            episodes (int): The total number of episodes for training.
+            max_steps (int): The maximum number of steps per episode.
+            refresh_rate (int): The frequency (in episodes) to log training progress.
+        """
         # Initialize the environment
         game = Game()
 
@@ -46,6 +62,7 @@ class TrainerDDQN:
         epsilon = self.epsilon_start
         update_steps = 0
         episode_rewards_history = []
+        loss_history = []
 
         for episode in range(1, episodes + 1):
             game.reset()
@@ -59,7 +76,8 @@ class TrainerDDQN:
                 replay_buffer.append(self.TRANSITION(state, action, reward, next_state))
 
                 # Execute a model training step
-                self.train_step(self.eval_network, target_network, optimizer, loss_fn, replay_buffer)
+                train_loss = self.train_step(self.eval_network, target_network, optimizer, loss_fn, replay_buffer)
+                loss_history.append(train_loss)
 
                 # End of episode step
                 episode_steps += 1
@@ -76,19 +94,30 @@ class TrainerDDQN:
             episode_rewards_history.append(game.score)
             if episode % refresh_rate == 0:
                 avg_reward = np.mean(episode_rewards_history[-refresh_rate:])
-                self.save_model(self.eval_network, "./resources/model_snapshot/", f"tetris_{episode}_")
+                avg_loss = np.mean(loss_history[-refresh_rate:])
+                self.save_model(self.eval_network, "../tetris/resources/model_snapshot/", f"tetris_{episode}_")
                 print(
                     f"Episode: {episode}/{episodes} | Steps: {episode_steps} | "
-                    f"Avg reward: {avg_reward:.2f} | Epsilon: {epsilon:.3f}")
+                    f"Avg reward: {avg_reward:.2f} | Avg loss: {avg_loss:.3f} | Epsilon: {epsilon:.3f}")
 
         # End training
-        self.save_model(self.eval_network, "./resources/model/", "tetris_")
-        self.save_metric(episode_rewards_history, "./resources/model/", "rewards_")
+        self.save_model(self.eval_network, "../tetris/resources/model/", "tetris_")
+        self.save_metric(episode_rewards_history, "../tetris/resources/model/", "rewards_")
         self.plot_rewards(episode_rewards_history)
 
-    def play_step(self, game, epsilon):
+    def play_step(self, game: Game, epsilon: float):
+        """
+        Perform a single step in the game using the epsilon-greedy policy.
+
+        Args:
+            game (Game): The Tetris game environment.
+            epsilon (float): The current epsilon value for exploration.
+
+        Returns:
+            tuple: A tuple containing the current state, action, reward, and next state.
+        """
         # Current state
-        state = torch.tensor(game.get_state(), dtype=torch.float32).unsqueeze(0)
+        state = torch.tensor(game.get_state(), dtype=torch.float32).unsqueeze(0).unsqueeze(0)
         current_score = game.score
 
         # Epsilon-greedy action selection
@@ -106,16 +135,29 @@ class TrainerDDQN:
         game_over = game.game_over
         if game_over:
             next_state = None
-            reward = -1000
+            reward = 0
         else:
-            next_state = torch.tensor(game.get_state(), dtype=torch.float32).unsqueeze(0)
+            next_state = torch.tensor(game.get_state(), dtype=torch.float32).unsqueeze(0).unsqueeze(0)
             reward = game.score - current_score
-        reward = torch.tensor([reward - self.get_rows_penalty(game)], dtype=torch.float32)
+        reward = torch.tensor([reward], dtype=torch.float32)
 
         return state, action, reward, next_state
 
-    def train_step(self, eval_network, target_network, optimizer, loss_fn, replay_buffer):
+    def train_step(self, eval_network: torch.nn.Module, target_network: torch.nn.Module,
+                   optimizer: torch.optim.Optimizer, loss_fn: torch.nn.Module, replay_buffer: collections.deque):
+        """
+        Perform a single training step using a batch of transitions from the replay buffer.
 
+        Args:
+            eval_network (torch.nn.Module): The evaluation network.
+            target_network (torch.nn.Module): The target network.
+            optimizer (torch.optim.Optimizer): The optimizer for training.
+            loss_fn (torch.nn.Module): The loss function.
+            replay_buffer (collections.deque): The replay buffer storing transitions.
+
+        Returns:
+            float: The training loss for the current step.
+        """
         if len(replay_buffer) < self.batch_size:
             return
 
@@ -148,20 +190,18 @@ class TrainerDDQN:
         # Backward step
         loss.backward()
         optimizer.step()
-
-    @staticmethod
-    def get_rows_penalty(game):
-        """
-        Calculate the penalty for the number of rows with blocks in the game.
-        """
-        non_zero_rows = np.nonzero(np.sum(game.grid.grid, axis=1))[0]
-        if non_zero_rows.size > 0:
-            return (game.grid.num_rows - non_zero_rows[0]) * 100
-        else:
-            return 0
+        return loss.item()
 
     @staticmethod
     def save_model(model, base_path, prefix):
+        """
+        Save the model's parameters to a file.
+
+        Args:
+            model (torch.nn.Module): The model to be saved.
+            base_path (str): The base directory for saving the model.
+            prefix (str): The prefix for the saved file name.
+        """
         if not os.path.exists(base_path):
             os.makedirs(base_path)
 
@@ -170,15 +210,29 @@ class TrainerDDQN:
 
     @staticmethod
     def save_metric(metric, base_path, prefix):
+        """
+        Save a metric (e.g., rewards) to a file.
+
+        Args:
+            metric (list): The metric data to be saved.
+            base_path (str): The base directory for saving the metric.
+            prefix (str): The prefix for the saved file name.
+        """
         if not os.path.exists(base_path):
             os.makedirs(base_path)
 
-        file_name = base_path + prefix + datetime.now().strftime("%Y_%m_%d-%H_%M_%S") + ".npy"
+        file_name = base_path + prefix + datetime.now().strftime("%Y_%m_%d-%H_%M_%S") + ".pkl"
         with open(file_name, "wb") as file:
             pkl.dump(metric, file)
 
     @staticmethod
     def plot_rewards(rewards):
+        """
+        Plot the rewards over episodes.
+
+        Args:
+            rewards (list): A list of rewards per episode.
+        """
         plt.figure(figsize=(12, 6))
         plt.plot(range(1, len(rewards) + 1), rewards, label="Reward per episode", alpha=0.4)
         if len(rewards) >= 50:
@@ -191,8 +245,3 @@ class TrainerDDQN:
         plt.legend()
         plt.grid(True)
         plt.show()
-
-
-dqn = DDQN(input_dim=201, output_dim=5)
-trainer = TrainerDDQN(model=dqn)
-trainer.train()
