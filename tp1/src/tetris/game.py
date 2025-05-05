@@ -2,8 +2,8 @@ import random
 
 import numpy as np
 
-from blocks import IBlock, JBlock, LBlock, OBlock, SBlock, TBlock, ZBlock
-from grid import Grid
+from .blocks import IBlock, JBlock, LBlock, OBlock, SBlock, TBlock, ZBlock
+from .grid import Grid
 
 
 class Game:
@@ -110,6 +110,12 @@ class Game:
             self.next_block.draw(screen, 270, 270)
 
     def get_state(self):
+        """
+        Returns the current state of the game as a binary matrix.
+
+        Returns:
+            np.ndarray: A binary matrix representing the current state of the game.
+        """
         state = self.grid.grid.copy()
         tiles = self.current_block.get_cell_positions()
         for position in tiles:

@@ -32,7 +32,7 @@ class TrainerDDQN:
         self.eval_network = model
         self.learning_rate = 0.001
         self.gamma = 0.99
-        self.epsilon_start = 0.001
+        self.epsilon_start = 0.5
         self.epsilon_end = 0.001
         self.epsilon_decay_episodes = 3000
         self.buffer_size = 10_000
@@ -95,14 +95,14 @@ class TrainerDDQN:
             if episode % refresh_rate == 0:
                 avg_reward = np.mean(episode_rewards_history[-refresh_rate:])
                 avg_loss = np.mean(loss_history[-refresh_rate:])
-                self.save_model(self.eval_network, "../tetris/resources/model_snapshot/", f"tetris_{episode}_")
+                self.save_model(self.eval_network, "./resources/model_snapshot/", f"tetris_{episode}_")
                 print(
                     f"Episode: {episode}/{episodes} | Steps: {episode_steps} | "
                     f"Avg reward: {avg_reward:.2f} | Avg loss: {avg_loss:.3f} | Epsilon: {epsilon:.3f}")
 
         # End training
-        self.save_model(self.eval_network, "../tetris/resources/model/", "tetris_")
-        self.save_metric(episode_rewards_history, "../tetris/resources/model/", "rewards_")
+        self.save_model(self.eval_network, "./resources/model/", "tetris_")
+        self.save_metric(episode_rewards_history, "./resources/model/", "rewards_")
         self.plot_rewards(episode_rewards_history)
 
     def play_step(self, game: Game, epsilon: float):
@@ -135,7 +135,7 @@ class TrainerDDQN:
         game_over = game.game_over
         if game_over:
             next_state = None
-            reward = 0
+            reward = -5
         else:
             next_state = torch.tensor(game.get_state(), dtype=torch.float32).unsqueeze(0).unsqueeze(0)
             reward = game.score - current_score
@@ -178,7 +178,7 @@ class TrainerDDQN:
         next_state_values = torch.zeros(self.batch_size)
         with torch.no_grad():
             eval_next_q_values = eval_network(non_final_next_states)
-            eval_best_next_actions = eval_next_q_values.max(1)[1].unsqueeze(1)  # Indices (argmax)
+            eval_best_next_actions = eval_next_q_values.max(1)[1].unsqueeze(1)
             target_next_q_values = target_network(non_final_next_states)
             selected_target_next_q_values = target_next_q_values.gather(1, eval_best_next_actions).squeeze(1)
             next_state_values[non_final_mask] = selected_target_next_q_values

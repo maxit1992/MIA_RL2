@@ -4,14 +4,19 @@ import pygame
 import pygame.surfarray
 import torch
 
-from colors import Colors
-from game import Game
-from src.model.model import DuelingDQN
+from .colors import Colors
+from .game import Game
 
 
 class GameUI:
+    """
+    A class to handle the graphical user interface (GUI) for the Tetris game.
+    """
 
     def __init__(self):
+        """
+        Initialize the GameUI class, setting up the display and fonts.
+        """
         pygame.init()
 
         self.title_font = pygame.font.Font(None, 40)
@@ -28,6 +33,13 @@ class GameUI:
         self.clock = pygame.time.Clock()
 
     def play(self, model_player: torch.nn.Module = None):
+        """
+        Start the game loop, allowing either user input or a trained model to play.
+
+        Args:
+            model_player (torch.nn.Module, optional): A trained PyTorch model to play the game.
+                If None, the game will be controlled by user input.
+        """
         game = Game()
         game.reset()
         lock_step = False
@@ -50,6 +62,13 @@ class GameUI:
 
     @staticmethod
     def handle_keyboard(event, game):
+        """
+        Handle keyboard input for controlling the game.
+
+        Args:
+            event (pygame.event.Event): The Pygame event representing a key press.
+            game (Game): The Tetris game instance.
+        """
         if game.game_over:
             game.reset()
         if event.key == pygame.K_LEFT and not game.game_over:
@@ -64,6 +83,17 @@ class GameUI:
 
     @staticmethod
     def handle_model_step(model_player: torch.nn.Module, game: Game, lock_step: bool):
+        """
+        Handle a single step of the game using a trained model.
+
+        Args:
+            model_player (torch.nn.Module): The trained PyTorch model.
+            game (Game): The Tetris game instance.
+            lock_step (bool): Whether the model is currently locked from taking another step.
+
+        Returns:
+            bool: The updated lock_step status.
+        """
         if game.game_over:
             game.reset()
             lock_step = False
@@ -77,6 +107,12 @@ class GameUI:
         return lock_step
 
     def draw(self, game):
+        """
+        Render the game screen, including the grid, score, and next block.
+
+        Args:
+            game (Game): The Tetris game instance.
+        """
         score_value_surface = self.title_font.render(str(game.score), True, Colors.white)
 
         self.screen.fill(Colors.dark_blue)
@@ -93,11 +129,3 @@ class GameUI:
         game.draw(self.screen)
         pygame.display.update()
         self.clock.tick(60)
-
-
-if __name__ == "__main__":
-    dqn = DuelingDQN(output_dim=5)
-    #dqn = DDQN(input_dim=201, output_dim=5)
-    dqn.load_state_dict(torch.load("resources/model/tetris_2025_05_03-16_27_53.pkl"))
-    ui = GameUI()
-    ui.play(dqn)

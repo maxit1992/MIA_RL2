@@ -11,10 +11,16 @@ Options:
     --model-file=<model-file>       Specify the model used to play the game.
     --model=<model_type>            The type of model to play/train. Valid options are: ddqn or dueling-dqn.
 """
-from docopt import docopt
-import torch
+import os
+import sys
 
-from src.model.trainer import TrainerDDQN
+import torch
+from docopt import docopt
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+
+from .model.trainer import TrainerDDQN
 from .tetris.game_ui import GameUI
 from .model.model import DDQN, DuelingDQN
 
@@ -59,6 +65,7 @@ def train(args: dict):
         raise RuntimeError('Invalid model type')
     trainer = TrainerDDQN(model=model)
     trainer.train()
+
 
 def main():
     """

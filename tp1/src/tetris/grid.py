@@ -1,7 +1,8 @@
+import numpy as np
 import pygame
 
-from colors import Colors
-import numpy as np
+from .colors import Colors
+
 
 class Grid:
     def __init__(self):
