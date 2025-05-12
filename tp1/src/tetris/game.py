@@ -62,7 +62,7 @@ class Game:
     def lock_block(self):
         tiles = self.current_block.get_cell_positions()
         for position in tiles:
-            self.grid.grid[position.row][position.column] = self.current_block.id
+            self.grid.matrix[position.row][position.column] = self.current_block.id
         self.current_block = self.next_block
         self.next_block = self.get_random_block()
         rows_cleared = self.grid.clear_full_rows()
@@ -116,7 +116,7 @@ class Game:
         Returns:
             np.ndarray: A binary matrix representing the current state of the game.
         """
-        state = self.grid.grid.copy()
+        state = self.grid.matrix.copy()
         tiles = self.current_block.get_cell_positions()
         for position in tiles:
             state[position.row][position.column] = self.current_block.id

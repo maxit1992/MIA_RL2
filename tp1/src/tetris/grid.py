@@ -9,13 +9,13 @@ class Grid:
         self.num_rows = 20
         self.num_cols = 10
         self.cell_size = 30
-        self.grid = np.array([[0 for _ in range(self.num_cols)] for _ in range(self.num_rows)])
+        self.matrix = np.array([[0 for _ in range(self.num_cols)] for _ in range(self.num_rows)])
         self.colors = Colors.get_cell_colors()
 
     def print_grid(self):
         for row in range(self.num_rows):
             for column in range(self.num_cols):
-                print(self.grid[row][column], end=" ")
+                print(self.matrix[row][column], end=" ")
             print()
 
     def is_inside(self, row, column):
@@ -24,24 +24,24 @@ class Grid:
         return False
 
     def is_empty(self, row, column):
-        if self.grid[row][column] == 0:
+        if self.matrix[row][column] == 0:
             return True
         return False
 
     def is_row_full(self, row):
         for column in range(self.num_cols):
-            if self.grid[row][column] == 0:
+            if self.matrix[row][column] == 0:
                 return False
         return True
 
     def clear_row(self, row):
         for column in range(self.num_cols):
-            self.grid[row][column] = 0
+            self.matrix[row][column] = 0
 
     def move_row_down(self, row, num_rows):
         for column in range(self.num_cols):
-            self.grid[row + num_rows][column] = self.grid[row][column]
-            self.grid[row][column] = 0
+            self.matrix[row + num_rows][column] = self.matrix[row][column]
+            self.matrix[row][column] = 0
 
     def clear_full_rows(self):
         completed = 0
@@ -56,12 +56,12 @@ class Grid:
     def reset(self):
         for row in range(self.num_rows):
             for column in range(self.num_cols):
-                self.grid[row][column] = 0
+                self.matrix[row][column] = 0
 
     def draw(self, screen):
         for row in range(self.num_rows):
             for column in range(self.num_cols):
-                cell_value = self.grid[row][column]
+                cell_value = self.matrix[row][column]
                 cell_rect = pygame.Rect(column * self.cell_size + 11, row * self.cell_size + 11,
                                         self.cell_size - 1, self.cell_size - 1)
                 pygame.draw.rect(screen, self.colors[cell_value], cell_rect)
