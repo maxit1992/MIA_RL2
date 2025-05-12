@@ -32,14 +32,14 @@ class TrainerDDQN:
         self.eval_network = model
         self.learning_rate = 0.001
         self.gamma = 0.99
-        self.epsilon_start = 0.5
+        self.epsilon_start = 1
         self.epsilon_end = 0.001
-        self.epsilon_decay_episodes = 3000
+        self.epsilon_decay_episodes = 600
         self.buffer_size = 10_000
         self.batch_size = 64
         self.target_update_freq = 100
 
-    def train(self, episodes: int = 10000, max_steps: int = 1000, refresh_rate: int = 50):
+    def train(self, episodes: int = 1000, max_steps: int = 1000, refresh_rate: int = 50):
         """
         Train the DQN model.
 
