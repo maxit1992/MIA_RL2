@@ -2,15 +2,16 @@
 
 ## Description
 
-This project implements a Tetris game with a graphical user interface (GUI) using Pygame. It also includes reinforcement
-learning (RL) models, such as Double Deep Q-Network (DDQN) and Dueling DQN, to train an AI agent to play the game. The
-project allows users to play the game manually or watch a trained model play.
+In this TP, students are required to solve a problem using Double-DQN and Dueling-DQN RL algorithms studied in class,
+more details on [document](resources/enunciado.pdf). In my solution, I have implemented a Tetris game with a graphical user interface (GUI) 
+using Pygame and the mentioned DQN models, to train an AI agent to play the game. The project allows users to play the 
+game manually or watch a trained model play.  A [report](resources/TP1_RL2_Maximiliano_Torti.pdf) with the analysis
+and conclusions of the work done is available.
 
 ## Requirements
 
 - Python 3.8 or higher
 - Dependencies listed in `requirements.txt`
--
 
 ## Installation
 
