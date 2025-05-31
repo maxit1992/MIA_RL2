@@ -55,6 +55,7 @@ class GameUI:
                 elif event.type == game_update:
                     if done:
                         state = game_wrapper.reset()
+                        done = False
                     else:
                         action, _ = model_player.predict(state, deterministic=True)
                         state, _, done, _ = game_wrapper.step(action)

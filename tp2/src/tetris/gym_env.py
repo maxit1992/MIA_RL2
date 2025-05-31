@@ -101,9 +101,9 @@ class TetrisGymWrapper(gym.Env):
         Returns:
             int: The current reward of the game.
         """
-        return 100 * self.game.lines_cleared \
-            - 0.4 * self.get_max_height() \
-            - 0.7 * self.get_holes()
+        return 0.7 * self.game.lines_cleared \
+            - 0.5 * self.get_max_height() \
+            - 0.3 * self.get_holes()
 
     def get_max_height(self):
         """

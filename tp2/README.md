@@ -4,7 +4,7 @@
 
 In this TP, students are required to solve a problem using advanced RL algorithms studied in class. In my solution, I
 continued the work done in previous TP and implemented a PPO agent for the Tetris game.
-A [report](resources/??) with the analysis and conclusions of the work done is available.
+A [report](resources/TP2_RL2_Maximiliano_Torti.pdf) with the analysis and conclusions of the work done is available.
 
 ## Requirements
 
